@@ -10,12 +10,15 @@ typedef struct pty {
     char *after;
     int masterFd;
     FILE *log_file;
-    fd_set *inFds;
+    fd_set inFds;
     pid_t child_pid;
     size_t buf_size;
     struct winsize ws;
 } pty_t;
 
-int expect(pty_t *eb, const char *re_str);
-int send_discard(pty_t *eb, const char *cmd, const char *prompt);
+int pty_expect(pty_t *eb, const char *re_str);
+int pty_send_discard(pty_t *eb, const char *cmd, const char *prompt);
 void ptySend(int fd, const char *text, size_t sz);
+
+pty_t *pty_spawnvp(const char *file, char *const argv[], size_t buf_size);
+int pty_send(pty_t *eb, const char *text, size_t chunk_size);

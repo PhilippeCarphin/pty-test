@@ -6,7 +6,7 @@
 #include <string.h>
 #include <stdlib.h>
 
-pty_t pty_spawnvp(const char *file, char *const argv[], size_t buf_size){
+pty_t *pty_spawnvp(const char *file, char *const argv[], size_t buf_size){
     char slaveName[MAX_SNAME];
     int masterFd;
     struct winsize ws;
@@ -23,7 +23,7 @@ pty_t pty_spawnvp(const char *file, char *const argv[], size_t buf_size){
         exit(1);
     }
 
-    childPid = ptyFork(&masterFd, slaveName, MAX_SNAME, &ttyOrig, &ws);
+    childPid = ptyFork(&p->masterFd, slaveName, MAX_SNAME, &ttyOrig, &p->ws);
     if(childPid == -1){
         fprintf(stderr, "ERROR: ptyFork returned -1\n");
         exit(1);
@@ -52,15 +52,29 @@ void ptySend(int fd, const char *text, size_t sz){
     }
 }
 
-int send_discard(pty_t *eb, const char *cmd, const char *prompt){
-    ptySend(eb->masterFd, cmd, 100);
-    expect(eb, prompt);
+int pty_send(pty_t *eb, const char *text, size_t chunk_size){
+    fprintf(eb->log_file, "%s() text='%s'\n", __func__, text);
+    size_t len = strlen(text);
+    const char *p = text;
+    for(int i = 0; i < len; i += chunk_size, p += chunk_size){
+        size_t write_len = ( i+chunk_size > len ? len-i : chunk_size );
+        if(write(eb->masterFd, p, write_len) != write_len){
+            fprintf(stderr, "%s(): Partial/failed write (masterFd)\n", __func__);
+        }
+    }
     return 0;
 }
 
-int expect(pty_t *eb, const char *re_str)
+
+int pty_send_discard(pty_t *eb, const char *cmd, const char *prompt){
+    pty_send(eb, cmd, 100);
+    pty_expect(eb, prompt);
+    return 0;
+}
+
+int pty_expect(pty_t *eb, const char *re_str)
 {
-    fprintf(eb->log_file, "%s(eb=%p, re_str='%s')\n",__func__, eb, re_str);
+    // fprintf(eb->log_file, "%s(eb=%p, re_str='%s')\n",__func__, eb, re_str);
     regex_t re;
     int err = regcomp(&re, re_str, 0);
     if(err){
@@ -73,15 +87,15 @@ int expect(pty_t *eb, const char *re_str)
     regmatch_t rm[re.re_nsub+1];
 
     for(;;){
-        FD_ZERO(eb->inFds);
-        FD_SET(STDIN_FILENO, eb->inFds);
-        FD_SET(eb->masterFd, eb->inFds);
+        FD_ZERO(&eb->inFds);
+        FD_SET(STDIN_FILENO, &eb->inFds);
+        FD_SET(eb->masterFd, &eb->inFds);
 
-        if(select(eb->masterFd + 1, eb->inFds, NULL, NULL, NULL) == -1){
+        if(select(eb->masterFd + 1, &eb->inFds, NULL, NULL, NULL) == -1){
             exit(89);
         }
 
-        if(FD_ISSET(eb->masterFd, eb->inFds)) {
+        if(FD_ISSET(eb->masterFd, &eb->inFds)) {
             char c;
             numRead = read(eb->masterFd, &c, 1);
             if(numRead < 0){
@@ -112,6 +126,14 @@ int expect(pty_t *eb, const char *re_str)
                 fprintf(eb->log_file, "Error using regex\n");
                 return 1;
             }
+
+            // TODO: There is no check that we have reached the buffer size,
+            // - Add a check
+            // - Think about turning it into a circular buffer so that chars
+            // - recorded earlier get overwritten and we don't need ...
+            //   circular buffer is too much.  The only reason I'm coding this
+            //   in C is to learn.  There is almost no way I would ever use
+            //   this library.
             cursor++;
         }
 
