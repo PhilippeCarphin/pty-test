@@ -1,0 +1,21 @@
+#include <stdio.h>
+#include <unistd.h> // pid_t
+#include <sys/select.h> // fd_set
+#include <sys/ioctl.h>
+
+typedef struct pty {
+    char *buffer;
+    char *cursor;
+    char *before;
+    char *after;
+    int masterFd;
+    FILE *log_file;
+    fd_set *inFds;
+    pid_t child_pid;
+    size_t buf_size;
+    struct winsize ws;
+} pty_t;
+
+int expect(pty_t *eb, const char *re_str);
+int send_discard(pty_t *eb, const char *cmd, const char *prompt);
+void ptySend(int fd, const char *text, size_t sz);
