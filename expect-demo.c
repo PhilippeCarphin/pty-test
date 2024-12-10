@@ -29,7 +29,6 @@ int fnprintchars(FILE *stream, size_t n, const char *s){
     }
     return 0;
 }
-    
 
 struct worker_args {
     int masterFd;
@@ -91,6 +90,7 @@ int main(int argc, char **argv)
     pty_send_discard(eb, "bind \"enable-bracketed-paste off\"\n", "XXPS1XX");
 
     pty_send_discard(eb, "stty echo\n", "XXPS1XX");
+
 
     pty_send(eb, "cat marker \n", 100);
     pty_expect(eb, "cat marker");

@@ -2,3 +2,7 @@ main
 *.o
 *.d
 
+expect-demo
+pty-demo
+log.txt
+*.dSYM
