@@ -46,13 +46,9 @@ void *worker(void *_args){
     struct timespec ts = {.tv_sec = 4, .tv_nsec = 0};
     nanosleep(&ts, NULL);
 
-    // ptySend(args->masterFd, "unset PROMPT_COMMAND; PS1=\"PTY-TEST $ \"\n", 1);
-
     ptySend(args->masterFd, "bind \"set completion-query-items -1\"\n", 1);
     ts.tv_sec = 0; ts.tv_nsec = 500000000;
     nanosleep(&ts, NULL);
-
-    // ptySend(args->masterFd, "bind \"set completion-display-width 0\"\n", 1);
 
     ptySend(args->masterFd, "bind \"set page-completions off\"\n", 1);
     nanosleep(&ts, NULL);
@@ -76,11 +72,10 @@ int main(int argc, char **argv)
     pty_t *eb = pty_spawnvp("bash", pty_argv, 40960);
     eb->log_file = log_file;
 
-    // pty_t eb = {.inFds=&inFds, .masterFd=masterFd, .log_file=log_file};
     pty_send(eb, "unset PROMPT_COMMAND; PS1=XXPS1XX\n", 100);
     pty_expect(eb, "XXPS1XX");
-    pty_expect(eb, "XXPS1XX");
 
+    pty_send_discard(eb, "bind \"set bell-style none\"\n", "XXPS1XX");
     pty_send_discard(eb, "bind \"set completion-query-items -1\"\n", "XXPS1XX");
     pty_send_discard(eb, "bind \"set completion-display-width 0\"\n", "XXPS1XX");
     pty_send_discard(eb, "bind \"set page-completions off\"\n", "XXPS1XX");
