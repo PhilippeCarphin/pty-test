@@ -5,6 +5,15 @@
 #include <time.h>
 #include <string.h>
 #include <stdlib.h>
+#include <stdarg.h>
+
+int pty_log(pty_t * eb, const char *fmt, ...){
+    va_list args;
+    va_start(args,fmt);
+    int result = vfprintf((eb->log_file ? eb->log_file : stderr), fmt, args);
+    va_end(args);
+    return result;
+}
 
 pty_t *pty_spawnvp(const char *file, char *const argv[], size_t buf_size){
     char slaveName[MAX_SNAME];
@@ -37,19 +46,6 @@ pty_t *pty_spawnvp(const char *file, char *const argv[], size_t buf_size){
     }
 
     return p;
-}
-
-void ptySend(int fd, const char *text, size_t sz){
-    size_t len = strlen(text);
-    const char *p = text;
-    for(int i = 0; i < len; i += sz, p += sz){
-        struct timespec ts = {.tv_sec = 0, .tv_nsec = 50000000};
-        nanosleep(&ts, NULL);
-        size_t write_len = ( i+sz > len ? len-i : sz );
-        if(write(fd, p, write_len) != write_len){
-            fprintf(stderr, "Partial/failed write (masterFd)\n");
-        }
-    }
 }
 
 int pty_send(pty_t *eb, const char *text, size_t chunk_size){

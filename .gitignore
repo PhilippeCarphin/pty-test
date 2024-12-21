@@ -6,3 +6,5 @@ expect-demo
 pty-demo
 log.txt
 *.dSYM
+X
+typescript

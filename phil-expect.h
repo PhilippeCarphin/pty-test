@@ -22,3 +22,8 @@ void ptySend(int fd, const char *text, size_t sz);
 
 pty_t *pty_spawnvp(const char *file, char *const argv[], size_t buf_size);
 int pty_send(pty_t *eb, const char *text, size_t chunk_size);
+int pty_log(pty_t * eb, const char *fmt, ...);
+
+#define pty_debug(eb, fmt, ...) \
+    pty_log(eb, "%s():%d: " fmt, __func__, __LINE__, __VA_ARGS__)
+

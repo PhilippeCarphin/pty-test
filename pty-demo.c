@@ -15,6 +15,8 @@
 #include <signal.h>
 
 #define BUF_SIZE 256
+#define MAX_SNAME 1000
+
 #include <libgen.h>
 #include <sys/stat.h>
 #include <sys/select.h>
@@ -27,22 +29,21 @@ void sigchld_handler(int signal){
     fprintf(stderr, "Signal %d(%s)\r\n", signal, sys_signame[signal]);
     child_finished = 1;
 }
-#define MAX_SNAME 1000
+
+void ptySend(int fd, const char *text, size_t sz){
+    size_t len = strlen(text);
+    const char *p = text;
+    for(int i = 0; i < len; i += sz, p += sz){
+        struct timespec ts = {.tv_sec = 0, .tv_nsec = 50000000};
+        nanosleep(&ts, NULL);
+        size_t write_len = ( i+sz > len ? len-i : sz );
+        if(write(fd, p, write_len) != write_len){
+            fprintf(stderr, "Partial/failed write (masterFd)\n");
+        }
+    }
+}
 
 struct termios ttyOrig;
-
-// void ptySend(int fd, const char *text, size_t sz){
-//     size_t len = strlen(text);
-//     const char *p = text;
-//     for(int i = 0; i < len; i += sz, p += sz){
-//         struct timespec ts = {.tv_sec = 0, .tv_nsec = 50000000};
-//         nanosleep(&ts, NULL);
-//         size_t write_len = ( i+sz > len ? len-i : sz );
-//         if(write(fd, p, write_len) != write_len){
-//             fprintf(stderr, "Partial/failed write (masterFd)\n");
-//         }
-//     }
-// }
 
 struct worker_args {
     int masterFd;

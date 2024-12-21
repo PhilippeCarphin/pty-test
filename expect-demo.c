@@ -33,12 +33,12 @@ int main(int argc, char **argv)
 
     pty_send(eb, "unset PROMPT_COMMAND; PS1=XXPS1XX\n", 100);
     pty_expect(eb, "XXPS1XX");
-    fprintf(log_file, "%s():%d: eb.before = '%s'\n", __func__, __LINE__,  eb->before);
-    fprintf(log_file, "%s():%d: eb.after = '%s'\n", __func__, __LINE__,  eb->after);
+    pty_debug(eb, "eb.before = '%s'\n", eb->before);
+    pty_debug(eb, "eb.after = '%s'\n",  eb->after);
 
     pty_expect(eb, "XXPS1XX");
-    fprintf(log_file, "%s():%d: eb.before = '%s'\n", __func__, __LINE__,  eb->before);
-    fprintf(log_file, "%s():%d: eb.after = '%s'\n", __func__, __LINE__,  eb->after);
+    pty_debug(eb, "eb.before = '%s'\n",  eb->before);
+    pty_debug(eb, "eb.after = '%s'\n",  eb->after);
 
     pty_send_discard(eb, "bind \"set bell-style none\"\n", "XXPS1XX");
     pty_send_discard(eb, "bind \"set completion-query-items -1\"\n", "XXPS1XX");
@@ -55,16 +55,16 @@ int main(int argc, char **argv)
     pty_send(eb, "echo \"YAYBOO\"\n", 100);
     pty_expect(eb, "YAYBOO");
     pty_expect(eb, "YAYBOO");
-    fprintf(log_file, "%s():%d: eb.before = '%s'\n", __func__, __LINE__,  eb->before);
-    fprintf(log_file, "%s():%d: eb.after = '%s'\n", __func__, __LINE__,  eb->after);
+    pty_debug(eb, "eb.before = '%s'\n",  eb->before);
+    pty_debug(eb, "eb.after = '%s'\n",  eb->after);
 
     pty_expect(eb, "XXPS1XX");
 
     pty_send(eb, "rcd \t\t", 100);
     pty_expect(eb, "rcd ");
     pty_expect(eb, "XXPS1XX");
-    fprintf(log_file, "%s():%d: eb.before = '%s'\n", __func__, __LINE__,  eb->before);
-    fprintf(log_file, "%s():%d: eb.after = '%s'\n", __func__, __LINE__,  eb->after);
+    pty_debug(eb, "eb.before = '%s'\n",  eb->before);
+    pty_debug(eb, "eb.after = '%s'\n",  eb->after);
     pty_send(eb, "exit 0\n", 100);
 
     fprintf(stdout, "%s\n", eb->before);
