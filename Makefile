@@ -2,6 +2,8 @@
 LDLIBS += -lpthread
 CFLAGS += -g3 -O0 -MMD
 
+all: pty-demo expect-demo
+
 pty-demo: tlpi-pt.o phil-expect.o pty-demo.o
 
 test: pty-demo

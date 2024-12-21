@@ -53,13 +53,13 @@ void ptySend(int fd, const char *text, size_t sz){
 }
 
 int pty_send(pty_t *eb, const char *text, size_t chunk_size){
-    fprintf(eb->log_file, "%s() text='%s'\n", __func__, text);
+    fprintf(eb->log_file, "%s():%d: text='%s'\n", __func__, __LINE__, text);
     size_t len = strlen(text);
     const char *p = text;
     for(int i = 0; i < len; i += chunk_size, p += chunk_size){
         size_t write_len = ( i+chunk_size > len ? len-i : chunk_size );
         if(write(eb->masterFd, p, write_len) != write_len){
-            fprintf(stderr, "%s(): Partial/failed write (masterFd)\n", __func__);
+            fprintf(stderr, "%s():%d: Partial/failed write (masterFd)\n", __func__, __LINE__);
         }
     }
     return 0;
