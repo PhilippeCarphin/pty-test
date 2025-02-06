@@ -61,15 +61,20 @@ void *worker(void *_args){
     struct timespec ts = {.tv_sec = 4, .tv_nsec = 0};
     nanosleep(&ts, NULL);
 
-    ptySend(args->masterFd, "unset PROMPT_COMMAND; PS1=\"PTY-TEST $ \"\n", 1);
+    ptySend(args->masterFd, "unset PROMPT_COMMAND; PS1=\"PTY-TEST $ \"\n", 4);
 
-    ptySend(args->masterFd, "bind \"set completion-query-items -1\"\n", 1);
+    ptySend(args->masterFd, "bind \"set completion-query-items -1\"\n", 4);
     ts.tv_sec = 0; ts.tv_nsec = 500000000;
     nanosleep(&ts, NULL);
 
-    ptySend(args->masterFd, "bind \"set completion-display-width 0\"\n", 1);
+    ptySend(args->masterFd, "bind \"set completion-display-width 0\"\n", 4);
 
-    ptySend(args->masterFd, "bind \"set page-completions off\"\n", 1);
+    ptySend(args->masterFd, "bind \"set page-completions off\"\n", 4);
+    nanosleep(&ts, NULL);
+
+    ptySend(args->masterFd, "echo \"YAYBOO YAYBOO it's lots of fun to do\"\n", 1);
+    ptySend(args->masterFd, "echo \"if you like it holler YAY\"\n", 1);
+    ptySend(args->masterFd, "echo \"and if you don't you holler BOO\"\n", 1);
     nanosleep(&ts, NULL);
 
     ptySend(args->masterFd, args->argv[2], 1);
