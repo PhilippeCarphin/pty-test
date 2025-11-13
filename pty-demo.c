@@ -26,7 +26,11 @@
 
 volatile int child_finished = 0;
 void sigchld_handler(int signal){
+#ifdef __APPLE__
     fprintf(stderr, "Signal %d(%s)\r\n", signal, sys_signame[signal]);
+#else
+    fprintf(stderr, "Signal %d\r\n", signal);
+#endif
     child_finished = 1;
 }
 
