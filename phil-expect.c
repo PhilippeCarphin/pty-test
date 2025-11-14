@@ -45,6 +45,10 @@ pty_t *pty_spawnvp(const char *file, char *const argv[], size_t buf_size){
         execvp(file, argv);
     }
 
+    FD_ZERO(&p->inFds);
+    FD_SET(STDIN_FILENO, &p->inFds);
+    FD_SET(p->masterFd, &p->inFds);
+
     return p;
 }
 
@@ -83,9 +87,6 @@ int pty_expect(pty_t *eb, const char *re_str)
     regmatch_t rm[re.re_nsub+1];
 
     for(;;){
-        FD_ZERO(&eb->inFds);
-        FD_SET(STDIN_FILENO, &eb->inFds);
-        FD_SET(eb->masterFd, &eb->inFds);
 
         if(select(eb->masterFd + 1, &eb->inFds, NULL, NULL, NULL) == -1){
             exit(89);
@@ -97,6 +98,9 @@ int pty_expect(pty_t *eb, const char *re_str)
             if(numRead < 0){
                 exit(0);
             }
+            if(eb->pty_output){
+                fwrite(&c, 1, 1, eb->pty_output);
+            }
             // Can't have '\r' in the re_str now: because of this, our buffer
             // will never have a '\r' put in it.
             switch(c){
@@ -106,31 +110,31 @@ int pty_expect(pty_t *eb, const char *re_str)
                     *cursor = c;
             }
 
-            int err = regexec(&re, eb->buffer, re.re_nsub+1, rm, 0);
-            if(err == 0){ // REG_NOERROR not available on mac
-                size_t before_len = rm[0].rm_so;
-                strncpy(eb->before, eb->buffer, before_len);
-                eb->before[before_len] = '\0';
+            // int err = regexec(&re, eb->buffer, re.re_nsub+1, rm, 0);
+            // if(err == 0){ // REG_NOERROR not available on mac
+            //     size_t before_len = rm[0].rm_so;
+            //     strncpy(eb->before, eb->buffer, before_len);
+            //     eb->before[before_len] = '\0';
 
-                size_t match_len = rm[0].rm_eo - rm[0].rm_so;
-                strncpy(eb->after, (eb->buffer + rm[0].rm_so), match_len);
-                eb->after[match_len] = '\0';
+            //     size_t match_len = rm[0].rm_eo - rm[0].rm_so;
+            //     strncpy(eb->after, (eb->buffer + rm[0].rm_so), match_len);
+            //     eb->after[match_len] = '\0';
 
-                // fprintf(eb->log_file, "%s(): Match found '%c'\n", __func__, *cursor);
-                return 0;
-            } else if(err != REG_NOMATCH){
-                fprintf(eb->log_file, "Error using regex\n");
-                return 1;
-            }
+            //     // fprintf(eb->log_file, "%s(): Match found '%c'\n", __func__, *cursor);
+            //     return 0;
+            // } else if(err != REG_NOMATCH){
+            //     fprintf(eb->log_file, "Error using regex\n");
+            //     return 1;
+            // }
 
-            // TODO: There is no check that we have reached the buffer size,
-            // - Add a check
-            // - Think about turning it into a circular buffer so that chars
-            // - recorded earlier get overwritten and we don't need ...
-            //   circular buffer is too much.  The only reason I'm coding this
-            //   in C is to learn.  There is almost no way I would ever use
-            //   this library.
-            cursor++;
+            // // TODO: There is no check that we have reached the buffer size,
+            // // - Add a check
+            // // - Think about turning it into a circular buffer so that chars
+            // // - recorded earlier get overwritten and we don't need ...
+            // //   circular buffer is too much.  The only reason I'm coding this
+            // //   in C is to learn.  There is almost no way I would ever use
+            // //   this library.
+            // cursor++;
         }
 
     }

@@ -10,6 +10,7 @@ typedef struct pty {
     char *after;
     int masterFd;
     FILE *log_file;
+    FILE *pty_output;
     fd_set inFds;
     pid_t child_pid;
     size_t buf_size;

@@ -28,8 +28,10 @@ int main(int argc, char **argv)
     }
 
     char * const pty_argv[] = { "bash", NULL };
-    pty_t *eb = pty_spawnvp("bash -l", pty_argv, 40960);
+    pty_t *eb = pty_spawnvp("bash", pty_argv, 40960);
+
     eb->log_file = log_file;
+    eb->pty_output = fopen("out.txt", "a");
 
     pty_send(eb, "unset PROMPT_COMMAND; PS1=XXPS1XX\n", 100);
     pty_expect(eb, "XXPS1XX");
