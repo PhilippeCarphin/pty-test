@@ -2,7 +2,9 @@
 LDLIBS += -lpthread
 CFLAGS += -g3 -O0 -MMD
 
-all: pty-demo expect-demo
+all: unbuffer pty-demo expect-demo
+
+unbuffer: tlpi-pt.o unbuffer.o
 
 pty-demo: tlpi-pt.o phil-expect.o pty-demo.o
 

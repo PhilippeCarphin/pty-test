@@ -144,7 +144,7 @@ pid_t ptyFork(int *masterFd, char *slaveName, size_t snLen, const struct termios
 #ifdef TIOCSCTTY
     // The book says this code is meant for BSD but I ran it on a Linux
     // computer and this macro was defined.
-    fprintf(stderr, "TIOCSCTTY is defined: we might be on BSD\r\n");
+    // fprintf(stderr, "TIOCSCTTY is defined: we might be on BSD\r\n");
     if(ioctl(slaveFd, TIOCSCTTY, 0) == -1){
         exit(1);
     }

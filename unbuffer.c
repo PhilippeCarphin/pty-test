@@ -40,7 +40,7 @@ int main(int argc, char **argv)
 {
     char slaveName[MAX_SNAME];
     char *shell;
-    int masterFd, scriptFd;
+    int masterFd;
     struct winsize ws;
     fd_set inFds;
     char buf[BUF_SIZE];
@@ -85,14 +85,6 @@ int main(int argc, char **argv)
     /*
      * PARENT
      */
-    char *script_file = (argc > 1 ? argv[1] : "typescript");
-    scriptFd = open(argc>1?argv[1]:"typescript",
-                    O_WRONLY | O_CREAT | O_TRUNC,
-                    S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH);
-    if(scriptFd == -1){
-        exit(1);
-    }
-
     ttySetRaw(STDIN_FILENO, &ttyOrig);
     if(atexit(ttyReset) != 0){
         exit(88);
@@ -134,9 +126,6 @@ int main(int argc, char **argv)
             }
             if(write(STDOUT_FILENO, buf, numRead) != numRead){
                 fprintf(stderr, "Partial/failed write (stdout)\n");
-            }
-            if(write(scriptFd, buf, numRead) != numRead){
-                fprintf(stderr, "Partial/failed write (scriptFd)\n");
             }
         }
     }
