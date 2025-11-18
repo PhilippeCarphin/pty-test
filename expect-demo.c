@@ -1,10 +1,13 @@
 #include "tlpi-pt.h"
 #include "phil-expect.h"
+#include <termios.h>
 
 #include <stdio.h>
 
 
 #define BUF_SIZE 256
+
+struct termios ttyOrig;
 
 int fnprintchars(FILE *stream, size_t n, const char *s){
     const char *c = s;
@@ -27,8 +30,8 @@ int main(int argc, char **argv)
         fprintf(stderr, "ERROR opening log_file\n");
     }
 
-    char * const pty_argv[] = { "bash", NULL };
-    pty_t *eb = pty_spawnvp("bash", pty_argv, 40960);
+    char * const pty_argv[] = { "/bin/bash", "-l", NULL};
+    pty_t *eb = pty_spawnvp("bash", pty_argv, 960);
     eb->log_file = log_file;
 
     pty_send(eb, "unset PROMPT_COMMAND; PS1=XXPS1XX\n", 100);

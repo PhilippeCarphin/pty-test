@@ -67,7 +67,7 @@ int pty_send_discard(pty_t *eb, const char *cmd, const char *prompt){
     pty_expect(eb, prompt);
     return 0;
 }
-
+const size_t BUF_SIZE=256;
 int pty_expect(pty_t *eb, const char *re_str)
 {
     // fprintf(eb->log_file, "%s(eb=%p, re_str='%s')\n",__func__, eb, re_str);
@@ -77,24 +77,27 @@ int pty_expect(pty_t *eb, const char *re_str)
         return err;
     }
     char *cursor = eb->buffer;
+    char buf[BUF_SIZE];
     int numRead;
     memset(eb->buffer, 0, 40960);
 
     regmatch_t rm[re.re_nsub+1];
 
+    fd_set inFds;
     for(;;){
-        FD_ZERO(&eb->inFds);
-        FD_SET(STDIN_FILENO, &eb->inFds);
-        FD_SET(eb->masterFd, &eb->inFds);
+        FD_ZERO(&inFds);
+        FD_SET(eb->masterFd, &inFds);
 
-        if(select(eb->masterFd + 1, &eb->inFds, NULL, NULL, NULL) == -1){
+        if(select(eb->masterFd + 1, &inFds, NULL, NULL, NULL) == -1){
             exit(89);
         }
 
-        if(FD_ISSET(eb->masterFd, &eb->inFds)) {
+        if(FD_ISSET(eb->masterFd, &inFds)) {
+            char buf[10];
             char c;
-            numRead = read(eb->masterFd, &c, 1);
+            numRead = read(eb->masterFd, buf, 10);
             if(numRead < 0){
+                fprintf(stderr, "BINGBONG! : numRead<0\n");
                 exit(0);
             }
             // Can't have '\r' in the re_str now: because of this, our buffer

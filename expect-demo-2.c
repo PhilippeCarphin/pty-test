@@ -23,68 +23,17 @@
 #include <time.h>
 #include "phil-expect.h"
 
-
+struct termios ttyOrig;
 volatile int child_finished = 0;
+
+
 void sigchld_handler(int signal){
 #ifdef __APPLE__
-    fprintf(stderr, "Signal %d(%s)\r\n", signal, sys_signame[signal]);
+    fprintf(stderr, "SIGCHLD: Signal %d(%s)\r\n", signal, sys_signame[signal]);
 #else
-    fprintf(stderr, "Signal %d\r\n", signal);
+    fprintf(stderr, "SIGCHLD: Signal %d\r\n", signal);
 #endif
     child_finished = 1;
-}
-
-void ptySend(int fd, const char *text, size_t sz){
-    size_t len = strlen(text);
-    const char *p = text;
-    for(int i = 0; i < len; i += sz, p += sz){
-        struct timespec ts = {.tv_sec = 0, .tv_nsec = 50000000};
-        nanosleep(&ts, NULL);
-        size_t write_len = ( i+sz > len ? len-i : sz );
-        if(write(fd, p, write_len) != write_len){
-            fprintf(stderr, "Partial/failed write (masterFd)\n");
-        }
-    }
-}
-
-struct termios ttyOrig;
-
-struct worker_args {
-    int masterFd;
-    int argc;
-    char **argv;
-    FILE *log_file;
-};
-
-void *worker(void *_args){
-
-    struct worker_args *args = (struct worker_args*)_args;
-    char buf[BUF_SIZE];
-    int write_len;
-
-    struct timespec ts = {.tv_sec = 4, .tv_nsec = 0};
-    nanosleep(&ts, NULL);
-
-    ptySend(args->masterFd, "unset PROMPT_COMMAND; PS1=\"PTY-TEST $ \"\n", 4);
-
-    ptySend(args->masterFd, "bind \"set completion-query-items -1\"\n", 4);
-    ts.tv_sec = 0; ts.tv_nsec = 500000000;
-    nanosleep(&ts, NULL);
-
-    ptySend(args->masterFd, "bind \"set completion-display-width 0\"\n", 4);
-
-    ptySend(args->masterFd, "bind \"set page-completions off\"\n", 4);
-    nanosleep(&ts, NULL);
-
-    ptySend(args->masterFd, "echo \"YAYBOO YAYBOO it's lots of fun to do\"\n", 1);
-    ptySend(args->masterFd, "echo \"if you like it holler YAY\"\n", 1);
-    ptySend(args->masterFd, "echo \"and if you don't you holler BOO\"\n", 1);
-    nanosleep(&ts, NULL);
-
-    ptySend(args->masterFd, args->argv[2], 1);
-    ts.tv_sec = 1;
-    nanosleep(&ts, NULL);
-    return NULL;
 }
 
 int main(int argc, char **argv)
@@ -125,23 +74,14 @@ int main(int argc, char **argv)
      * CHILD
      */
     if(childPid == 0){
+        fprintf(log_file, "(");
         for(int i=3; i < argc; i++){
             fprintf(log_file, ", %s", argv[i]);
         }
         fprintf(log_file, ")\n");
-        execvp(argv[3], &argv[3]);
+	char *child_argv[] = {"bash", "-l", NULL};
+        execvp("bash", child_argv);
         exit(8);
-    }
-
-    /*
-     * PARENT
-     */
-    char *script_file = (argc > 1 ? argv[1] : "typescript");
-    scriptFd = open(argc>1?argv[1]:"typescript",
-                    O_WRONLY | O_CREAT | O_TRUNC,
-                    S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH);
-    if(scriptFd == -1){
-        exit(1);
     }
 
     ttySetRaw(STDIN_FILENO, &ttyOrig);
@@ -149,14 +89,14 @@ int main(int argc, char **argv)
         exit(88);
     }
 
-    struct worker_args wa = {
-        .masterFd = masterFd,
-        .argc = argc,
-        .argv = argv,
-        .log_file = log_file
-    };
-    pthread_t async_writer;
-    pthread_create(&async_writer, NULL, worker, &wa);
+
+    /*
+     * PARENT
+     */
+    ttySetRaw(STDIN_FILENO, &ttyOrig);
+    if(atexit(ttyReset) != 0){
+        exit(88);
+    }
 
     fprintf(stderr, "masterFd=%d\r\n", masterFd);
     for(;;){

@@ -15,8 +15,6 @@
 
 #include "tlpi-pt.h"
 
-struct termios ttyOrig;
-
 void ttyReset(void)
 {
     if(tcsetattr(STDIN_FILENO, TCSANOW, &ttyOrig) == -1){
