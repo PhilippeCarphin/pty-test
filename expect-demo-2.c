@@ -69,6 +69,14 @@ int main(int argc, char **argv)
     }
     setbuf(log_file, NULL);
 
+    // NOTE: true mode is (mode & ~umask)
+    int mode = S_IRUSR | S_IWUSR;
+    fprintf(stderr, "Perms: %o\n", mode);
+    int out_fd = open("pty-log.txt", O_WRONLY | O_CREAT | O_APPEND, mode);
+    if(out_fd == -1){
+        exit(1);
+    }
+
 
     /*
      * CHILD
@@ -79,16 +87,10 @@ int main(int argc, char **argv)
             fprintf(log_file, ", %s", argv[i]);
         }
         fprintf(log_file, ")\n");
-	char *child_argv[] = {"bash", "-l", NULL};
+        char *child_argv[] = {"bash", "-l", NULL};
         execvp("bash", child_argv);
         exit(8);
     }
-
-    ttySetRaw(STDIN_FILENO, &ttyOrig);
-    if(atexit(ttyReset) != 0){
-        exit(88);
-    }
-
 
     /*
      * PARENT
@@ -101,6 +103,7 @@ int main(int argc, char **argv)
     fprintf(stderr, "masterFd=%d\r\n", masterFd);
     for(;;){
         FD_ZERO(&inFds);
+        FD_SET(STDIN_FILENO, &inFds);
         FD_SET(masterFd, &inFds);
 
         if(select(masterFd + 1, &inFds, NULL, NULL, NULL) == -1){
@@ -135,8 +138,13 @@ int main(int argc, char **argv)
             if(write(STDOUT_FILENO, buf, numRead) != numRead){
                 fprintf(stderr, "Partial/failed write (stdout)\n");
             }
-            if(write(scriptFd, buf, numRead) != numRead){
-                fprintf(stderr, "Partial/failed write (scriptFd)\n");
+            int numWrite = write(out_fd, buf, numRead);
+            if(numWrite < 0){
+                fprintf(stderr, "Failed write (numRead == -1)\r\n");
+                exit(0);
+            }
+            if(numWrite != numRead){
+                fprintf(stderr, "Partial/failed write (masterFd)\r\n");
             }
         }
     }

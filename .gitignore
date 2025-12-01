@@ -8,3 +8,6 @@ log.txt
 *.dSYM
 X
 typescript
+unbuffer
+expect-demo-2
+*.txt
