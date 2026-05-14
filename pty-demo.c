@@ -72,6 +72,7 @@ int main(int argc, char **argv)
      * CHILD
      */
     if(childPid == 0){
+        fprintf(log_file, "(");
         for(int i=3; i < argc; i++){
             fprintf(log_file, ", %s", argv[i]);
         }
