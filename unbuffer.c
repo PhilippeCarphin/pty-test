@@ -34,8 +34,6 @@ void sigchld_handler(int signal){
     child_finished = 1;
 }
 
-struct termios ttyOrig;
-
 int main(int argc, char **argv)
 {
     char slaveName[MAX_SNAME];
