@@ -13,6 +13,8 @@ target_link_libraries(expect-demo PRIVATE phil-expect)
 add_executable(pty-demo pty-demo.c)
 target_link_libraries(pty-demo PRIVATE phil-expect)
 
+add_executable(standalone-demo standalone-demo.c)
+
 include(CTest)
 
 add_custom_target(check COMMAND ${CMAKE_CTEST_COMMAND} --verbose)
