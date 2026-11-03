@@ -319,7 +319,11 @@ void tty_reset(void)
 }
 
 void sigchld_handler(int signal){
-    fprintf(log_file, "MASTER: Signal %d(%s) received, setting child_finished to 1\r\n", signal, sys_signame[signal]);
+#ifdef __APPLE__
+    fprintf(stderr, "Signal %d(%s) received, setting child_finished to 1\r\n", signal, sys_signame[signal]);
+#else
+    fprintf(stderr, "Signal %d received, setting child_finished to 1\r\n", signal);
+#endif
     child_finished = 1;
 }
 
