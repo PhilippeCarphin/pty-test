@@ -304,12 +304,11 @@ void *worker(void *_args){
 }
 
 int start_worker(int master_fd, int argc, char *argv[]){
-    struct worker_args wa = {
-        .master_fd = master_fd,
-        .argc = argc,
-        .argv = argv,
-        .log_file = log_file
-    };
+    static struct worker_args wa;
+    wa.master_fd = master_fd;
+    wa.argc = argc;
+    wa.argv = argv;
+    wa.log_file = log_file;
     pthread_t async_writer;
     return pthread_create(&async_writer, NULL, worker, &wa);
 }
