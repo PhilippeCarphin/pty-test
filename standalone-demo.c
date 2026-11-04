@@ -1,19 +1,15 @@
 
-#include <string.h> // sys_signame and others.
 #define _XOPEN_SOURCE 600
-#include <stdlib.h> // exit, posix_openpt, grantpt, unlockpt, ptsname, atexit
-#include <fcntl.h> // O_RDWR, O_NOCTTY
-#include <pthread.h> // pthread_t, pthread_create
-#include <unistd.h> // STDIN_FILENO, STDOUT_FILENO, STDERR_FILENO, setsid, close, dup2, fork, execvp, read, write
 #include <stdio.h>
-
-#include <termios.h> // struct termios, tcgetattr, tcsetattr, flags like ICANON, TCSANOW, ...
-#include <sys/ioctl.h> // ioctl
+#include <sys/ioctl.h>
+#include <termios.h>
+#include <unistd.h>
+#include <stdlib.h>
+#include <pthread.h>
+#include <string.h>
 #include <signal.h>
-
-#include <sys/stat.h>
+#include <fcntl.h>
 #include <sys/select.h>
-#include <time.h>
 
 #define BUF_SIZE 256
 #define MAX_SNAME 1000
@@ -104,26 +100,33 @@ int main(int argc, char **argv)
      * - Exec some other program
      */
     if(child_pid == 0){
+        fprintf(log_file, "CHILD: begin child branch of fork\r\n");
         char slaveName[1000];
         char *p = ptsname(master_fd);
         if(p == NULL){
-            perror("ptsname()");
+            fprintf(log_file, "CHILD: ERROR: ptsname()\r\n");
             exit(1);
         }
+        fprintf(log_file, "CHILD: MARKER %p\r\n", p);
+        // QUEN This line seems to segfault
         strcpy(slaveName, p);
 
+        fprintf(log_file, "CHILD: After strcpy\r\n");
         if(setsid() == -1){
+            fprintf(log_file, "CHILD: ERROR: setsid()\r\n");
             perror("setsid()");
             exit(1);
         }
 
         if(close(master_fd)){
+            fprintf(log_file, "CHILD: ERROR: close(master_fd)\r\n");
             perror("close()");
             exit(1);
         }
 
         int slaveFd = open(slaveName, O_RDWR);
         if(slaveFd == -1){
+            fprintf(log_file, "CHILD: ERROR: open(slaveName, O_RDWR)\r\n");
             exit(1);
         }
 
@@ -237,7 +240,7 @@ int main(int argc, char **argv)
                 exit(0);
             }
             if(write(STDOUT_FILENO, buf, numRead) != numRead){
-                fprintf(stderr, "Partial/failed write (stdout)\n");
+                // fprintf(stderr, "Partial/failed write (stdout)\n");
             }
         }
     }
