@@ -13,7 +13,7 @@ test: standalone-demo
 
 expect-demo: expect-demo.o tlpi-pt.o phil-expect.o
 
-t2: expect-demo
+t2: pty-demo
 	./$< X X bash
 
 clean:
