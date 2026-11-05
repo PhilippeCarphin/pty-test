@@ -321,12 +321,10 @@ void tty_reset(void)
 }
 
 void sigchld_handler(int signal){
-#ifdef __APPLE__
-    fprintf(stderr, "Signal %d(%s) received, setting child_finished to 1\r\n", signal, sys_signame[signal]);
-#else
-    fprintf(stderr, "Signal %d received, setting child_finished to 1\r\n", signal);
-#endif
-    child_finished = 1;
+    if(signal == SIGCHLD){
+        fprintf(stderr, "Signal SIGCHLD(%d) received, setting child_finished to 1\r\n", signal);
+        child_finished = 1;
+    }
 }
 
 int tty_set_raw(int fd)
